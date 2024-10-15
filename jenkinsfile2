@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+    stages {
+        stage("checkout the code") {
+            steps {
+                echo "pulling the code"
+                git url: "https://github.com/aryamanmaurya/flask-app.git", branch: "main"
+                echo "code pull sucessful"
+            }
+        }
+        stage("build the image") {
+            steps{
+                echo "building started...."
+                sh "docker build -t flask-app:latest ."
+                echo "build completed."
+            }
+        }
+        stage("push the code to docker hub") { 
+            steps{
+                withCredentials([usernamePassword('credentialsId': "dockerHubCred",
+                    passwordVariable:"dockerHubPass",
+                    usernameVariable:"dockerHubUser")]){
+                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
+                    sh "docker image tag flask-app ${env.dockerHubUser}/flask-app2:latest"
+                    sh "docker push ${env.dockerHubUser}/flask-app2:latest"
+                }
+            }
+        }
+    }
+}
